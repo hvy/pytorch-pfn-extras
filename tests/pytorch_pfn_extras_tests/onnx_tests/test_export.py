@@ -118,6 +118,21 @@ def test_keep_initializers_as_inputs():
     assert len(model.graph.input) == 2
 
 
+def test_keep_initializers_as_inputs_non_persistent():
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.register_buffer("var", torch.rand(10, 10), persistent=False)
+
+        def forward(self, x):
+            return self.var + x
+
+    model: onnx.ModelProto = run_model_test(Model(), (torch.rand((10,)),), keep_initializers_as_inputs=False)
+    assert len(model.graph.input) == 1
+    model = run_model_test(Model(), (torch.rand((1,)),), keep_initializers_as_inputs=True)
+    assert len(model.graph.input) == 2
+
+
 @pytest.mark.filterwarnings("ignore:No names were found for specified dynamic axes of:UserWarning")
 def test_dynamic_axes():
     class Model(torch.nn.Module):
